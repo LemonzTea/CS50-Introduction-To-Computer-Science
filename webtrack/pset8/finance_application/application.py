@@ -45,27 +45,23 @@ if not os.environ.get("API_KEY"):
 def index():
     results = db.execute("SELECT stock, quantity FROM asset WHERE user_id=:user_id", user_id=session.get("user_id"))
 
-    # Get all stock prices
-    stockPrices = []
-
     # Get a list of all stock prices, and the total value owned by the user
     for result in results:
         eachPrice = float(lookup(result["stock"])["price"])
-        stockPrices.append({"price": eachPrice,
-                            "totalPrice": eachPrice * int(result["quantity"])})
+        result["price"] =  eachPrice
+        result["totalPrice"] = round(eachPrice * int(result["quantity"]),2)
 
     # Get account balance for the user
     balance = float(db.execute("SELECT * FROM users WHERE id = :user_id", user_id=session.get("user_id"))[0]["cash"])
 
     # Calculate Total value of the user
     totalValue = balance
-    for result in stockPrices:
+    for result in results:
         totalValue += result["totalPrice"]
 
     # Render Webpage
     return render_template("mainpage.html",
                             results=results,
-                            stockPrices=stockPrices,
                             balance=balance,
                             totalValue=totalValue)
 
