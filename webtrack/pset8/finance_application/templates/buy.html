@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+
+{% block main %}
+    {% if message %}
+        <p>{{ message }}</p>
+    {% endif %}
+
+
+    <form action="/buy" method="post">
+        <label>Enter a stock symbol: </label>
+        <input name="symbol" type="text" placeholder="symbol"><br>
+
+        <label>Enter a quantity: </label>
+        <input name="amount" type="number" min="1" step="1"> <br>
+
+
+        <input type="submit">
+    </form>
+{% endblock %}

@@ -51,7 +51,60 @@ def index():
 @login_required
 def buy():
     """Buy shares of stock"""
-    return apology("TODO")
+    if request.method == "POST":
+        symbol = request.form.get("symbol").upper()
+        quantity = request.form.get("amount")
+
+        if symbol == "":
+            return render_template("buy.html", message = "Symbol cannot be empty")
+        elif quantity is "" or int(quantity) <= 0:
+            return render_template("buy.html", message = "Quantity must be at least 1")
+
+        # Check if symbol exists
+        result = lookup(symbol)
+        if result is None:
+            return render_template("buy.html", message = "Symbol does not exist")
+
+        # Check if quantity is within budget
+        amount = db.execute("SELECT cash FROM users WHERE id = :id", id=session.get("user_id"))
+        amount = float(amount[0]["cash"])
+        transaction_total_price = float(result["price"]) * int(quantity)
+        if transaction_total_price > amount:
+            return render_template("buy.html", message = "Insufficient Funds in account")
+        else:
+            # Adds transaction into
+            db.execute("INSERT INTO transactions(user_id, symbol, quantity, price_per_qty, transaction_type) " +
+                       "VALUES (:user_id, :symbol, :quantity, :price_per_qty, :trans_type)",
+                       user_id=session.get("user_id"),
+                       symbol=symbol,
+                       quantity=int(quantity),
+                       price_per_qty=float(result["price"]),
+                       trans_type='buy')
+
+            # Reduce Total Available Cash
+            balance = amount - transaction_total_price
+            db.execute("UPDATE users SET cash = :balance WHERE id = :id", balance=balance, id=session.get("user_id"))
+
+            # Update Asset for User
+            result = db.execute("SELECT * FROM asset WHERE user_id = :user_id AND stock = :symbol",
+                                user_id=session.get("user_id"),
+                                symbol=symbol)
+
+            if len(result) == 0:
+                db.execute("INSERT INTO asset (user_id, stock, quantity) VALUES (:user_id, :stock, :quantity)",
+                            user_id=session.get("user_id"),
+                            stock=symbol,
+                            quantity=quantity)
+            else:
+                db.execute("UPDATE asset SET quantity = :quantity WHERE user_id = :user_id AND stock = :symbol",
+                           quantity=int(result[0]["quantity"]) + int(quantity),
+                           user_id=session.get("user_id"),
+                           symbol=symbol)
+
+            flash("Purchase Successful")
+            return redirect("/")
+    else:
+        return render_template("buy.html")
 
 
 @app.route("/history")
