@@ -250,8 +250,72 @@ def register():
 @app.route("/sell", methods=["GET", "POST"])
 @login_required
 def sell():
-    """Sell shares of stock"""
-    return apology("TODO")
+    options = db.execute("SELECT stock, quantity FROM asset WHERE user_id = :user_id", user_id=session.get("user_id"))
+    if request.method == "POST":
+        stockToSell = request.form.get("symbol")
+        amtToSell = request.form.get("amount")
+
+        # Check if option is selected
+        if stockToSell == "":
+            return render_template("sell.html",
+                       options=options,
+                       message= "Select a stock to sell")
+
+        # Check if user has filled all fields
+        if amtToSell == None or amtToSell == 0 or amtToSell == "":
+            return render_template("sell.html",
+                                   options=options,
+                                   message= "Select a quantity to sell")
+        else:
+            amtToSell = int(amtToSell)
+            options = db.execute("SELECT stock, quantity FROM asset WHERE user_id = :user_id AND stock = :stock",
+                                  user_id=session.get("user_id"),
+                                  stock = stockToSell)
+
+        # Check if user has sufficient quantity to sell
+        if int(options[0]["quantity"]) < amtToSell:
+            return render_template("sell.html",
+                                   options=options,
+                                   message= "Unable to sell. Only " +
+                                            str(options[0]["quantity"]) +
+                                            " in possession")
+
+        # Get current price of stock
+        currentPrice = float(lookup(stockToSell)["price"])
+
+        # Get current cash of user
+        currentcash = float(db.execute("SELECT cash FROM users WHERE id = :user_id", user_id=session.get("user_id"))[0]["cash"])
+        new_cash = currentcash + currentPrice * amtToSell
+
+        # Add to total cash
+        db.execute("UPDATE users SET cash = :new_cash WHERE id = :user_id",
+                    new_cash=new_cash,
+                    user_id=session.get("user_id"))
+
+        # Remove from asset
+        if int(options[0]["quantity"]) == amtToSell:
+            db.execute("DELETE FROM asset WHERE user_id = :user_id AND stock = :stock",
+                        user_id = session.get("user_id"),
+                        stock = stockToSell)
+        else:
+            db.execute("UPDATE asset SET quantity = :new_quantity WHERE user_id = :user_id AND stock = :stock",
+                        new_quantity=int(options[0]["quantity"] - amtToSell),
+                        user_id = session.get("user_id"),
+                        stock = stockToSell)
+
+        # Add to transaction
+        db.execute("INSERT INTO transactions(user_id, symbol, quantity, price_per_qty, transaction_type) VALUES" +
+                    "(:user_id, :symbol, :quantity, :price_per_qty,'sell')",
+                    user_id = session.get("user_id"),
+                    symbol = stockToSell,
+                    quantity = 0-amtToSell,
+                    price_per_qty = currentPrice)
+
+
+        flash("Transaction Completed Successfully")
+        return redirect("/")
+    else:
+        return render_template("sell.html", options=options)
 
 
 def errorhandler(e):

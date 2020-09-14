@@ -5,21 +5,22 @@
         <p>{{ message }}</p>
     {% endif %}
 
-
-    <form action="/buy" method="post">
+    <form action"/sell" method="POST">
         <div class="form-group">
-            <label>Enter a stock symbol: </label>
-            <input name="symbol" type="text" placeholder="symbol">
+            <label>Select Symbol: </label>
+            <select name="symbol">
+                {% for option in options %}
+                    <option value="{{ option['stock'] }}">{{ option["stock"] }}</option>
+                {% endfor %}
+            </select>
         </div>
 
         <div class="form-group">
-            <label>Enter a quantity: </label>
             <input name="amount" type="number" min="1" step="1">
         </div>
 
         <div class="form-group">
             <input type="submit">
         </div>
-
     </form>
 {% endblock %}
