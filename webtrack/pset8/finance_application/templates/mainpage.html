@@ -3,15 +3,32 @@
 {% block main %}
     <h1>Assets Owned</h1>
 
-    <table>
+    <table class="table table-striped">
         <tr>
             <th>Share</th>
             <th>Quantity</th>
             <th>Current Price</th>
             <th>Total Value</th>
         </tr>
+        {% for row in results %}
+            <tr>
+                <td scope="row">{{ row["stock"] }}</td>
+                <td>{{ row["quantity"] }}</td>
+        {% endfor %}
+        {% for row in stockPrices %}
+                <td>${{ row["price"] }}</td>
+                <td>${{ row["totalPrice"] }}</td>
+            </tr>
+        {% endfor %}
         <tr>
-            <td></td>
+            <td>Account Balance</td>
+            <td></td><td></td>
+            <td>{{ balance }}</td>
+        </tr>
+        <tr>
+            <td>Total Value</td>
+            <td></td><td></td>
+            <td>{{ totalValue }}</td>
         </tr>
     </table>
 {% endblock %}
