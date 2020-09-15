@@ -12,20 +12,25 @@ class Track {
     let name: String
     let instructor: String
     
+    // Constructor
     init(name: String, instructor: String) {
         self.name = name
         self.instructor = instructor
     }
 }
 
+// Create an array of tracks
 let tracks: [Track] = [
     Track(name: "Mobile", instructor: "Tommy"),
     Track(name: "Web", instructor: "Brian"),
     Track(name: "Games", instructor: "Colton")
 ]
 
+// Create an array of students
 let students = ["Harry", "Ron", "Hermione"]
 
+
+// Assign all students to a track each
 var assignments:[String : Track] = [:]
 for student in students {
     // random number between 0 < 3
@@ -33,6 +38,7 @@ for student in students {
     assignments[student] = tracks[track]
 }
 
+// Checks the dictionary
 for (student, track) in assignments {
     print("\(student) got \(track.name) with \(track.instructor)")
 }
